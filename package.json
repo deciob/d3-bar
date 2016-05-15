@@ -1,0 +1,44 @@
+{
+  "name": "d3-bar",
+  "version": "0.0.1",
+  "description": "Simple d3 plugin that will handle common use case bar charts",
+  "keywords": [
+    "d3",
+    "bar-chart"
+  ],
+  "license": "BSD-3-Clause",
+  "main": "build/d3-bar.js",
+  "jsnext:main": "index",
+  "homepage": "https://github.com/deciob/d3-bar",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deciob/d3-bar.git"
+  },
+  "scripts": {
+    "start": "http-server",
+    "pretest": "rm -rf build && mkdir build && json2module package.json > build/package.js && rollup -f umd -n d3_bar -o build/d3-bar.js -g d3-array:d3_array,d3-collection:d3_collection,d3-interpolate:d3_interpolate,d3-format:d3_format,d3-time:d3_time,d3-time-format:d3_time_format,d3-color:d3_color -- index.js",
+    "test": "tape 'test/**/*-test.js' | tap-spec",
+    "prepublish": "npm run test && uglifyjs build/d3-bar.js -c -m -o build/d3-bar.min.js",
+    "postpublish": "zip -j build/d3-bar.zip -- LICENSE README.md build/d3-bar.js build/d3-bar.min.js"
+  },
+  "devDependencies": {
+    "eslint": "^2.9.0",
+    "http-server": "^0.9.0",
+    "json2module": "0.0",
+    "rollup": "0.25",
+    "tap-spec": "^4.1.1",
+    "tape": "4",
+    "uglify-js": "2"
+  },
+  "dependencies": {
+    "d3-array": "^0.7.1",
+    "d3-collection": "^0.1.2",
+    "d3-color": "^0.4.2",
+    "d3-format": "^0.5.1",
+    "d3-interpolate": "^0.7.0",
+    "d3-scale": "^0.7.0",
+    "d3-selection": "^0.7.2",
+    "d3-time": "^0.2.5",
+    "d3-time-format": "^0.3.2"
+  }
+}
