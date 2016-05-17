@@ -94,10 +94,12 @@ export function getSet(obj, state) {
 
 // getRange :: String -> Object -> Array
 export function getRange(axes, config) {
+  var width = config.width - config.margin.left - config.margin.right;
+  var height = config.height - config.margin.top - config.margin.bottom;
   if (axes === 'x') {
-    return config.invertOrientation ? [0, config.height] : [0, config.width];
+    return config.invertOrientation ? [0, height] : [0, width];
   } else if (axes = 'y') {
-    return config.invertOrientation ? [0, config.width] : [0, config.height];
+    return config.invertOrientation ? [0, width] : [0, height];
   }
 }
 

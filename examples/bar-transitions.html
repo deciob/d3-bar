@@ -1,0 +1,179 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>bars</title>
+    <style>
+      .axis {
+        font: 10px sans-serif;
+      }
+
+      .axis path,
+      .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+      }
+
+      .axis--y path {
+        display: none;
+      }
+
+      .bar {
+        fill: #3182bd;
+        fill-opacity: .7;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <h2>Adjusted net enrolment rate, primary, female (%) <span class="year"></span></h2>
+      <div class="chart"></div>
+      <p>Data source: The World Bank</p>
+    </div>
+    </div>
+
+  <script src="../node_modules/d3-dsv/build/d3-dsv.js"></script>
+  <script src="../node_modules/d3-format/build/d3-format.js"></script>
+  <script src="../node_modules/d3-dispatch/build/d3-dispatch.js"></script>
+  <script src="../node_modules/d3-color/build/d3-color.js"></script>
+  <script src="../node_modules/d3-timer/build/d3-timer.js"></script>
+  <script src="../node_modules/d3-ease/build/d3-ease.js"></script>
+  <script src="../node_modules/d3-interpolate/build/d3-interpolate.js"></script>
+  <script src="../node_modules/d3-selection/build/d3-selection.js"></script>
+  <script src="../node_modules/d3-transition/build/d3-transition.js"></script>
+  <script src="../node_modules/d3-collection/build/d3-collection.js"></script>
+  <script src="../node_modules/d3-array/build/d3-array.js"></script>
+  <script src="../node_modules/d3-axis/build/d3-axis.js"></script>
+
+  <script src="../build/d3-bar.js"></script>
+  <script>
+
+    const margin = {top: 0, right: 30, bottom: 20, left: 220};
+    const padding = {bottom: 0, left: 5};
+    const width = 960 - margin.left - margin.right;
+    const height = 500 - margin.top - margin.bottom;
+    const percentFormat = d3_format.format('.0%');
+
+    function delay(d, i) {
+      return i * 30;
+    };
+
+    function sortData(data) {
+      return data.sort((a, b) => b.value - a.value);
+    }
+
+    function removeGeoAreasWithNoData(data) {
+      return data.filter(d => d.value);
+    }
+
+    function prepareData(data) {
+      return data.reduce((accumulator, d) => {
+        Object.keys(d).forEach((k) => {
+          if (!Number.isInteger(+k)) { return; }
+          let value;
+          if (d[+k] === '..') {
+            value = 0;
+          } else {
+            value = +d[+k] / 100;
+          }
+          const newEntry = {
+            value,
+            geoCode: d.CountryCode,
+            geoName: d.Country,
+          };
+          if (accumulator[+k]) {
+            accumulator[+k].push(newEntry);
+          } else {
+            accumulator[+k] = [newEntry];
+          }
+        });
+        return accumulator;
+      }, {});
+    }
+
+    function drawXAxis(el, scale) {
+      el.append('g')
+          .attr('class', 'axis axis--x')
+          .attr('transform', `translate(${padding.left},${height})`)
+          .call(d3_axis.axisBottom(scale).tickFormat(percentFormat));
+    }
+
+    function drawYAxis(el, data, scale, t) {
+      let axis = el.select('.axis--y');
+      if (axis.empty()) {
+        axis = el.append('g')
+          .attr('class', 'axis axis--y')
+          .attr('transform', `translate(0,-${padding.bottom})`);
+      }
+
+      axis.transition(t)
+          .call(d3_axis.axisLeft(scale))
+        .selectAll('g')
+          .delay(delay);
+    }
+
+    function xAccessor(d) {
+      return d.geoName;
+    }
+
+    function yAccessor(d) {
+      return d.value;
+    }
+
+    const chart = d3_selection.select('.chart');
+
+    const svg = d3_selection.select('.chart').append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+      .append('g')
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    fetch('./data/adjusted-net-enrolment-rate-primary-female-percentage.csv')
+      .then((res) => res.text())
+      .then((res) => {
+        const data = prepareData(d3_dsv.csvParse(res));
+        const years = Object.keys(data).map(d => +d);
+        const lastYear = years[years.length - 1];
+        let startYear = years[0];
+        let selectedData = removeGeoAreasWithNoData(sortData(data[startYear]));
+        let geoAreas = selectedData.map(yAccessor);
+
+        d3_selection.select('.year').text(startYear);
+
+        const bar = d3_bar.bar();
+        bar
+          .xAccessor(xAccessor)
+          .yAccessor(yAccessor)
+          .yDomain([0, 1])
+          .padding(padding)
+          .invertOrientation(true)
+          .height(height)
+          .width(width);
+        svg.datum(selectedData).call(bar);
+
+        drawXAxis(svg, bar.yScale());
+        drawYAxis(svg, selectedData, bar.xScale());
+
+        const interval = d3_timer.interval(() => {
+          const t = d3_transition.transition().duration(150);
+          bar.transition(t);
+
+          startYear += 1;
+          selectedData = removeGeoAreasWithNoData(sortData(data[startYear]));
+
+          d3_selection.select('.year').text(startYear);
+
+          bar.xDomain(selectedData.map(xAccessor));
+          svg.datum(selectedData).call(bar);
+          drawYAxis(svg, selectedData, bar.xScale(), t);
+
+          if (startYear === lastYear) {
+            interval.stop();
+          }
+        }, 300);
+      });
+  </script>
+  </body>
+</html>

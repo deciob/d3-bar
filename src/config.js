@@ -1,11 +1,12 @@
 export default {
-  duration: 750,
+  //duration: 750,
   ease: 'linear',
   delay: function(d, i) {
     return i * 50;
   },
   height: 300,
   invertOrientation: false,
+  margin: {top: 0, right: 0, bottom: 0, left: 0},
   padding: {left: 0, bottom: 0},
   transition: void 0,
   width: 400,
